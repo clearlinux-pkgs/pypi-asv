@@ -4,13 +4,15 @@
 #
 Name     : pypi-asv
 Version  : 0.5.1
-Release  : 4
+Release  : 5
 URL      : https://files.pythonhosted.org/packages/5b/e4/f4af30aa6e75c12832f3d61cd07610510e2e47aaa1547513f4a51dd335b1/asv-0.5.1.tar.gz
 Source0  : https://files.pythonhosted.org/packages/5b/e4/f4af30aa6e75c12832f3d61cd07610510e2e47aaa1547513f4a51dd335b1/asv-0.5.1.tar.gz
 Summary  : Airspeed Velocity: A simple Python history benchmarking tool
 Group    : Development/Tools
 License  : BSD-3-Clause
 Requires: pypi-asv-bin = %{version}-%{release}
+Requires: pypi-asv-filemap = %{version}-%{release}
+Requires: pypi-asv-lib = %{version}-%{release}
 Requires: pypi-asv-license = %{version}-%{release}
 Requires: pypi-asv-python = %{version}-%{release}
 Requires: pypi-asv-python3 = %{version}-%{release}
@@ -34,9 +36,28 @@ BuildRequires : pypi(wheel)
 Summary: bin components for the pypi-asv package.
 Group: Binaries
 Requires: pypi-asv-license = %{version}-%{release}
+Requires: pypi-asv-filemap = %{version}-%{release}
 
 %description bin
 bin components for the pypi-asv package.
+
+
+%package filemap
+Summary: filemap components for the pypi-asv package.
+Group: Default
+
+%description filemap
+filemap components for the pypi-asv package.
+
+
+%package lib
+Summary: lib components for the pypi-asv package.
+Group: Libraries
+Requires: pypi-asv-license = %{version}-%{release}
+Requires: pypi-asv-filemap = %{version}-%{release}
+
+%description lib
+lib components for the pypi-asv package.
 
 
 %package license
@@ -59,6 +80,7 @@ python components for the pypi-asv package.
 %package python3
 Summary: python3 components for the pypi-asv package.
 Group: Default
+Requires: pypi-asv-filemap = %{version}-%{release}
 Requires: python3-core
 Provides: pypi(asv)
 Requires: pypi(six)
@@ -70,13 +92,16 @@ python3 components for the pypi-asv package.
 %prep
 %setup -q -n asv-0.5.1
 cd %{_builddir}/asv-0.5.1
+pushd ..
+cp -a asv-0.5.1 buildavx2
+popd
 
 %build
 export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1649712872
+export SOURCE_DATE_EPOCH=1653001801
 export GCC_IGNORE_WERROR=1
 export AR=gcc-ar
 export RANLIB=gcc-ranlib
@@ -87,6 +112,15 @@ export FFLAGS="$FFLAGS -O3 -ffat-lto-objects -flto=auto "
 export CXXFLAGS="$CXXFLAGS -O3 -ffat-lto-objects -flto=auto "
 export MAKEFLAGS=%{?_smp_mflags}
 python3 -m build --wheel --skip-dependency-check --no-isolation
+pushd ../buildavx2/
+export CFLAGS="$CFLAGS -m64 -march=x86-64-v3 -Wl,-z,x86-64-v3 "
+export CXXFLAGS="$CXXFLAGS -m64 -march=x86-64-v3 -Wl,-z,x86-64-v3 "
+export FFLAGS="$FFLAGS -m64 -march=x86-64-v3 -Wl,-z,x86-64-v3 "
+export FCFLAGS="$FCFLAGS -m64 -march=x86-64-v3 "
+export LDFLAGS="$LDFLAGS -m64 -march=x86-64-v3 "
+python3 -m build --wheel --skip-dependency-check --no-isolation
+
+popd
 
 %install
 export MAKEFLAGS=%{?_smp_mflags}
@@ -97,6 +131,15 @@ pip install --root=%{buildroot} --no-deps --ignore-installed dist/*.whl
 echo ----[ mark ]----
 cat %{buildroot}/usr/lib/python3*/site-packages/*/requires.txt || :
 echo ----[ mark ]----
+pushd ../buildavx2/
+export CFLAGS="$CFLAGS -m64 -march=x86-64-v3 -Wl,-z,x86-64-v3 "
+export CXXFLAGS="$CXXFLAGS -m64 -march=x86-64-v3 -Wl,-z,x86-64-v3 "
+export FFLAGS="$FFLAGS -m64 -march=x86-64-v3 -Wl,-z,x86-64-v3 "
+export FCFLAGS="$FCFLAGS -m64 -march=x86-64-v3 "
+export LDFLAGS="$LDFLAGS -m64 -march=x86-64-v3 "
+pip install --root=%{buildroot}-v3 --no-deps --ignore-installed dist/*.whl
+popd
+/usr/bin/elf-move.py avx2 %{buildroot}-v3 %{buildroot}/usr/share/clear/optimized-elf/ %{buildroot}/usr/share/clear/filemap/filemap-%{name}
 
 %files
 %defattr(-,root,root,-)
@@ -104,6 +147,14 @@ echo ----[ mark ]----
 %files bin
 %defattr(-,root,root,-)
 /usr/bin/asv
+
+%files filemap
+%defattr(-,root,root,-)
+/usr/share/clear/filemap/filemap-pypi-asv
+
+%files lib
+%defattr(-,root,root,-)
+/usr/share/clear/optimized-elf/other*
 
 %files license
 %defattr(0644,root,root,0755)
