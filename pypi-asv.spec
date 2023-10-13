@@ -5,7 +5,7 @@
 #
 Name     : pypi-asv
 Version  : 0.5.1
-Release  : 18
+Release  : 19
 URL      : https://files.pythonhosted.org/packages/5b/e4/f4af30aa6e75c12832f3d61cd07610510e2e47aaa1547513f4a51dd335b1/asv-0.5.1.tar.gz
 Source0  : https://files.pythonhosted.org/packages/5b/e4/f4af30aa6e75c12832f3d61cd07610510e2e47aaa1547513f4a51dd335b1/asv-0.5.1.tar.gz
 Summary  : Airspeed Velocity: A simple Python history benchmarking tool
